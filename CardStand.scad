@@ -17,16 +17,16 @@ card_thickness = 0.3;
 card_height = 80;
 
 // number of cards
-number_of_cards = 40;
+number_of_cards = 30;
 
 
 /* [Advanced] */
 
 // size of the front step
-front_lip = 4;
+front_lip = 5;
 
 // size of the back step
-back_lip = 4;
+back_lip = 5;
 
 // thickness of the walls of the stand
 wall_thickness = 2;
@@ -38,10 +38,13 @@ gap = 2;
 /* [Hidden] */
 
 // Show the card deck?
-showCards = false;
+showCards = true;
 
 // Shortcut for wall_thickness
 t=wall_thickness;
+
+// A tiny offset used to ensure CSG clearance and prevent coincident surface problems
+j=0.01;
 
 
 // Size of the actual stack of cards
@@ -65,9 +68,12 @@ module base()
 
 	holeSizeX = stackSizeX + (gap * 2);
 	holeSizeY = stackSizeY + (gap * 2);
-	holeSizeZ = stackSizeZ;
+	holeSizeZ = standBackZ - t;
 
 	angle = atan((standBackZ - standFrontZ) / (standSizeY - _frontLip - _backLip));
+	slopeLength = (standBackZ-standFrontZ) / sin(angle);
+	slopeHeight = (standSizeY-back_lip) * sin(angle);
+	stepHeight = (standBackZ-standFrontZ);
 
 	color([0.8, 0, 0])
 	difference()
@@ -77,22 +83,24 @@ module base()
 		// The main hole for the cards
 		translate([t, t, t])
 		{
-			cube([holeSizeX, holeSizeY, holeSizeZ]);
+			cube([holeSizeX, holeSizeY, holeSizeZ+j]);
 		}
 
 		// The former for the slope
-		if (t + _frontLip + _backLip + t >= standSizeY)
+		if (_frontLip + _backLip >= standSizeY)
 		{
 			echo("Not using a slope - not enough space");
 		} else {
+
 			translate([0, _frontLip, standFrontZ])
 			rotate([angle, 0, 0])
-			translate([-1, 0, 0])
-			cube([standSizeX+2, 1000, 1000]);
+			translate([-j, 0, 0])
+			cube([standSizeX+j+j, slopeLength+j, slopeHeight+j]);
+
 
 			// The former to flatten the front
-			translate([-1, -1, standFrontZ])
-			cube([standSizeX+2, _frontLip+1, standBackZ-standFrontZ]);
+			translate([-j, -j, standFrontZ])
+			cube([standSizeX+j+j, _frontLip+j, stepHeight+j]);
 		}
 
 	}
@@ -102,7 +110,7 @@ module base()
 module cards()
 {
 	color([0.9, 0.5, 0.1, 0.8])
-	translate([t, t, t])
+	translate([t, t, t+j])
 	translate([gap, gap, 0])
 	cube([stackSizeX, stackSizeY, stackSizeZ]);
 }
@@ -115,6 +123,6 @@ union()
 
 	if (showCards)
 	{
-		cards();
+		% cards();
 	}
 }
