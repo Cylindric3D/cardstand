@@ -1,4 +1,0 @@
-cardstand
-=========
-
-Customisable Card Stand
